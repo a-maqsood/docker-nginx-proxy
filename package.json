@@ -1,0 +1,14 @@
+{
+  "name": "docker-nginx-reverse-proxy",
+  "version": "0.1.0",
+  "description": "Nginx reverse proxy to forward traffic to containers",
+  "main": "src/index.js",
+  "author": "Ali Maqsood <ali.maqsood.dev@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "dedent": "^0.7.0",
+    "docker-events": "0.0.2",
+    "dockerode": "^3.3.0",
+    "lodash": "^4.17.21"
+  }
+}
