@@ -1,5 +1,5 @@
 {
-  "name": "docker-nginx-reverse-proxy",
+  "name": "docker-nginx-proxy",
   "version": "0.1.0",
   "description": "Nginx reverse proxy to forward traffic to containers",
   "main": "src/index.js",
