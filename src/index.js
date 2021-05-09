@@ -8,6 +8,7 @@
   const _ = require('lodash')
   const template = require('./template')
 
+  const exec = util.promisify(require('child_process').exec)
   const writeFile = util.promisify(fs.writeFile)
 
   const defaultConf = fs.readFileSync(__dirname + '/default.conf', 'utf-8')
@@ -34,20 +35,14 @@
     const inspections = await containers.inspectContainers(allContainters)
   
     const hostData = extractor.extractDataFromInspection(inspections, currentNetworkIds)
-    const conf = template.generate(hostData)
+    const newConf = template.generate(hostData)
 
-    // console.log('-----------------------------------')
-    // console.log(conf)
-    // console.log(util.inspect(conf, false, null, true /* enable colors */))
-    await writeFile(__dirname + '/../nginx.conf', defaultConf + conf)
+    await writeFile('/etc/nginx/conf.d/default.conf', defaultConf + newConf)
+    await exec('nginx -s reload')
     
   }, 1000)
   
-  generateProxyConf()
-
   const events = dockerInit.getDockerEventsInstance()
-
-
   const dockerListen = [
     'start',
     'stop',
@@ -58,7 +53,6 @@
     'kill',
     'restart'
   ]
-
   const networkListen = [
     'connect',
     'destroy',
@@ -69,11 +63,9 @@
     if(!['container', 'network'].includes(message.Type)){
       return
     }
-    
     if(message.Type == 'container' && !dockerListen.includes(message.status)){
       return
     }
-
     if(message.Type == 'network' && !networkListen.includes(message.status)){
       return
     }
@@ -81,6 +73,7 @@
     generateProxyConf()
   })
 
+  generateProxyConf()
   events.start()
 
 })()

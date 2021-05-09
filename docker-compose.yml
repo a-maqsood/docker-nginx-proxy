@@ -1,0 +1,26 @@
+
+services:
+    proxy:
+        build: .
+        userns_mode: host
+        networks:
+            proxy-net:
+                ipv4_address: ${PROXY_IP:-10.20.30.1}
+        volumes:
+            - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    dev:
+        extends:
+            service: proxy
+        volumes: 
+            - .:/www
+            - ./supervisor.conf:/etc/supervisor.d/default.ini
+        environment:    
+            APP_ENV: ${PROXY_ENV:-dev}
+
+networks:
+    proxy-net:
+        name: ${PROXY_NETWORK_NAME:-docker-nginx-proxy}
+        ipam:
+            driver: default
+            config:
+                - subnet: ${PROXY_SUBNET:-10.20.30.0/24}

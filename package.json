@@ -10,5 +10,17 @@
     "docker-events": "0.0.2",
     "dockerode": "^3.3.0",
     "lodash": "^4.17.21"
+  },
+  "scripts": {
+    "docker:build": "docker-compose build proxy",
+    "docker:start": "docker-compose up --build -d proxy",
+    "docker:dev": "docker-compose up -d dev",
+    "docker:stop": "docker-compose down",
+    "start": "[[ $APP_ENV = \"dev\" ]] && { npm run dev; true; } || { npm run proxy; }",
+    "proxy": "node src/index.js",
+    "dev": "npx nodemon -L -e '*' --watch src src/index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }

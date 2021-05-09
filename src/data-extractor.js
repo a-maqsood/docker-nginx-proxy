@@ -1,7 +1,7 @@
 const _ = require('lodash')
 
 function extractDataFromInspection(inspection, networkIds, excludeIds = []){
-  let data = []
+  let data = {}
   inspection.forEach((container) => {
     if(excludeIds.indexOf(container.Id) > -1){
       return
@@ -43,8 +43,11 @@ function extractDataFromInspection(inspection, networkIds, excludeIds = []){
     ports = _.uniq(ports)
 
     hosts.forEach((host) => {
-      data.push({
-        host,
+      if(!data.hasOwnProperty(host)){
+        data[host] = []
+      }
+
+      data[host].push({
         ip,
         ports
       })

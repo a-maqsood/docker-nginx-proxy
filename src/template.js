@@ -3,35 +3,70 @@ const dedent = require('dedent')
 
 function generate(data){
   let template = ''
-  let allPorts = []
+  let allPorts = ['80']
 
-  data.forEach((server) => {
+  _.each(data, (hostData, host) => {
 
-    const ports = server.ports.reduce((ports, port) => ports += `listen ${port};\n        `, '')
-    allPorts = allPorts.concat(server.ports)
-    const hostRegex = server.host.replace(/([\.\-])/g, '\\$1')
+    const upstreamServers = {}
+
+    let hostPorts = []
+    hostData.forEach((server) => {
+      server.ports.forEach((port) => {
+        upstreamServers[port] = upstreamServers[port] || []
+        upstreamServers[port].push(server.ip)
+      })
+      
+      hostPorts = hostPorts.concat(server.ports)
+      allPorts = allPorts.concat(server.ports)
+    })
+
+    let upstreams = ''
+    _.each(upstreamServers, (ips, port) => {
+      const serversTempl = ips.map(ip => `server ${ip}:${port};`).join('\n          ')
+      
+      upstreams += `
+        upstream ${host}_${port} {
+          ${serversTempl}
+        }
+      `
+    })
 
     template += dedent`
-      \n\n\n# ${server.host}
+        \n\n\n
+        # ${host}
+      ${upstreams}
+    `
+
+
+    hostPorts = _.uniq(hostPorts)
+    
+    const portsTmpl = hostPorts.map(port => `listen ${port};`).join('\n        ')
+    const hostRegex = host.replace(/([\.\-])/g, '\\$1')
+  
+    const serversTmpl = dedent`
+      \n
       server {
-        server_name ~^p(?<current_port>\\d+)\\.${hostRegex}$;
+        server_name ~^p(?<current_port>\d+)\.${hostRegex}$;
         listen 80;
+
         access_log /var/log/nginx/access.log vhost;
         location / {
-            proxy_pass http://${server.ip}:$current_port;
+            proxy_pass http://${ hostData.length == 1 ? hostData[0].ip + ':' : host + '_' }$current_port;
         }
       }
 
       server {
-        server_name ${server.host};
-        ${ports}
+        server_name ${host};
+        ${portsTmpl}
+
         access_log /var/log/nginx/access.log vhost;
         location / {
-            proxy_pass http://${server.ip}:$server_port;
+            proxy_pass http://${host}_$server_port;
         }
       }
     `
 
+    template += serversTmpl
   })
 
   allPorts = _.uniq(allPorts)

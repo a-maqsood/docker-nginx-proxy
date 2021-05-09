@@ -2,3 +2,4 @@
 /*.tmpl
 .*/
 node_modules
+.env
